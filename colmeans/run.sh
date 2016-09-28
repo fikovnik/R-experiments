@@ -3,6 +3,7 @@ set -e
 
 URL="https://cloud.r-project.org/src/base/R-3/R-3.3.1.tar.gz"
 VERSION="3.3.1"
+FORCE=${FORCE:-''}
 
 test -f "R-$VERSION.tar.gz" || wget "$URL"
 
@@ -18,8 +19,8 @@ function do_exec() {
 function run() {
   BASE_DIR="RUN-$1"
   R_DIR="$BASE_DIR/R-3.3.1"
-  CC="$2"
-  CFLAGS="$3"
+  export CC="$2"
+  export CFLAGS="$3"
 
   test -d "$R_DIR" || {
     mkdir "$BASE_DIR"
@@ -27,9 +28,18 @@ function run() {
   }
   cd "$R_DIR"
 
-  test -f "Makefile" || do_exec ./configure --without-recommended-packages --disable-java
-  test -f "bin/exec/R" || do_exec make
+  if [ "$FORCE" ]; then
+      rm -f ../run.out
+      rm -f ../build.out
+      test -f "Makefile" && do_exec make clean
+      do_exec ./configure --without-recommended-packages --disable-java --without-aqua --with-x --without-tcltk
+      do_exec make
+  else
+    test -f "Makefile" || do_exec do_exec ./configure --without-recommended-packages --disable-java --without-aqua --with-x --without-tcltk
+    test -f "bin/exec/R" || do_exec make
+  fi
 
+  rm -f ../run.out
   for i in {1..10}; do
     ./bin/Rscript ../../colmeans-test.R | tee -a "../run.out"
   done
