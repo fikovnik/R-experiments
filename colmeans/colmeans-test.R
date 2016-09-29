@@ -1,7 +1,4 @@
-if (!require(rbenchmark)) {
-  install.packages("rbenchmark", repos='http://cran.us.r-project.org')
-  require(rbenchmark)
-}
+require(rbenchmark)
 
 N = 1000
 len = 100000
